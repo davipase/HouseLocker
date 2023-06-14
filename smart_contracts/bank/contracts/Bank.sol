@@ -68,16 +68,22 @@ contract Bank{
         }
     }
 
+    function get_data() public pure returns (string memory){
+        return string(msg.data);
+    }
 
-    function send_money(address payable _to) public payable returns(address,address){
+    // function send_money(address payable _to) public payable returns(address,address){
+    function send_money(address payable _to) public payable returns(bool){
+
         // receiver.transfer(1);
         // require(owner.balance>msg.value,"not enough ethers");
         if(msg.sender == owner){
             // bool res = _to.send(msg.value);
             _to.transfer(msg.value);   
-            return (msg.sender,_to);
+            // return (msg.sender,_to);
+
         }
-        return (address(2),address(3));
+        return (false);
         // else{
         //     return address(2);
         // }

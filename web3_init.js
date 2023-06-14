@@ -14,7 +14,7 @@ const bankContract = init_contract();
 function init_contract(){
 
     // console.log("a")
-    var bankAddress = "0x1b62b0E1Dd48d56F51D9e049e3641BD968104440"; //TODO CHANGE IT
+    var bankAddress = "0x0930C67a532C65035E8e054b1CD19a7217224818"; //TODO CHANGE IT
 
     const abi = require("./smart_contracts/bank/build/contracts/Bank.json")
 

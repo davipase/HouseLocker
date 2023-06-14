@@ -25,7 +25,16 @@
   <form method = "get" action = "/send_money">
     <button type = "submit">send money</button>
   </form>
-
+  <br>
+  <form method = "get" action = "/test_msg.data">
+    <button type = "submit">test msg.data</button>
+  </form>
+  <br>
+  <form method = "get" action = "/add_hash_to_db">
+    <label for="hash_input">insert hash:</label>
+    <input id = "hash_input" type="text" name="hash" >
+    <button type = "submit">add hash to db</button>
+  </form>
   <br>
   <form method="get" action="/balance" onsubmit="return isAddress(document.getElementById('account_input').value)">
     <label for="account_input"> Insert address:</label>

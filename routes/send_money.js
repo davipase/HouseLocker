@@ -17,9 +17,12 @@ router.post("/",(req,res)=>{
 
     console.log("quantity:",qty,"\nsender:",sender_addr, "\nreceiver:",receiver_addr);
 
-    bankContract.methods.send_money(receiver_addr).call({value: web3.utils.toWei(qty, 'ether'), from:sender_addr})
+    bankContract.methods.send_money(receiver_addr).send({value: web3.utils.toWei(qty, 'ether'), from:sender_addr})
     .then(result=>{
         res.send(result)
+    })
+    .catch(err=>{
+        res.send(err)
     })
     // .then(*
 })

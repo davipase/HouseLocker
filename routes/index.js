@@ -41,7 +41,13 @@ router.get("/owner", async (req,res)=>{
 
 router.get("/add_hash_to_db", async (req,res)=>{
   var h = req.query.hash;
-  const hash1 = new Hash({hash:h})
+  var ren = req.query.renter;
+  var rooms = req.query.rooms;
+  var r = []
+  for (var i=0;i<rooms;i++){
+    r.push(i);
+  }
+  const hash1 = new Hash({hash:h, renter:ren, rooms:r})
   hash1.save()
   .then(res.send("success"))
   .catch("ERRORONEE")

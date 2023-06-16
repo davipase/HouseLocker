@@ -49,4 +49,8 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+var intervalId = setInterval(function() {
+  console.log("Interval reached every 5s")
+}, 5000);
+
 module.exports = app;

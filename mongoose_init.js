@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
 
 const hashSchema = new mongoose.Schema({
+    renter: String,
     hash: String,
+    rooms:[]
 })
 
 const Hash = mongoose.model('Hash', hashSchema);

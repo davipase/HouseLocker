@@ -10,7 +10,10 @@ contract Prova {
         uint room_id;
         bool student_paid;
         bool renter_paid;
-        uint amt_paid;
+        uint amt_paid_student;
+        uint amt_paid_renter;
+        bool concluded_student;
+        bool concluded_renter;
         address payable student;
         address payable renter;
     }
@@ -38,7 +41,7 @@ contract Prova {
     address payable contract_address = payable(address(this));
     mapping(uint => contract_instance) contract_record;         // associa a ogni id la rispettiva struct di contratto
     mapping(address => user) user_info;                        // associa a ogni indirizzo il suo ruolo (student: 0, renter: 1)
-    mapping(address => uint[]) renters_rooms;                  // associa a ogni renter un array che contiene l'id (o NFT, chissà) delle sue stanze
+    mapping(address => uint[]) renters_rooms;                  // associa a ogni renter un array che contiene l'id delle sue stanze
     mapping(uint => room) rooms_record;    
     uint conversion_rate = 586099570929370;                     // DA CHIEDERE ALL'ESTERNO?
     uint num_contracts;                                         // var globale che incremento a ogni nuovo contratto e la uso come id
@@ -88,14 +91,26 @@ contract Prova {
         // check che lo studente non sia già in una "istanza" di contratto o che la stanza non sia già occupata
         require(check_if_already_in_contract(student, room_id) == false, "Student or room already in contract"); // controllare che l'inizializzazione venga interrotta e venga emesso il messaggio di errore
         
-        // check that renter is the room owner
+        // check that the renter is the room's owner
         require(rooms_record[room_id].owner == renter, "Inconsistency between room owner and renter");
 
         // se né lo student né la stanza sono già in un contratto, possiamo procedere alla creazione della struct che rappresenta l'istanza del contratto
         uint new_id = num_contracts;
         num_contracts++;
         rooms_record[room_id].occupied = true;
-        contract_instance memory instance = contract_instance({contract_id: new_id, room_id: room_id, student_paid: false, renter_paid: false, amt_paid: 0, student: student, renter: renter});
+        contract_instance memory instance = contract_instance({
+            contract_id: new_id, 
+            room_id: room_id, 
+            student_paid: false, 
+            renter_paid: false, 
+            amt_paid_student: 0, 
+            amt_paid_renter: 0, 
+            concluded_student: false, 
+            concluded_renter: false, 
+            student: student, 
+            renter: renter
+        });
+
         contract_record[new_id] = instance;
         user_info[student].room_record.push(new_id);
         user_info[renter].room_record.push(new_id);
@@ -124,14 +139,25 @@ contract Prova {
         uint new_id = num_contracts;
         num_contracts++;
         rooms_record[room_id].occupied = true;
-        contract_instance memory instance = contract_instance({contract_id: new_id, room_id: room_id, student_paid: false, renter_paid: false, amt_paid: 0, student: student, renter: renter});
+        contract_instance memory instance = contract_instance({
+            contract_id: new_id, 
+            room_id: room_id, 
+            student_paid: false, 
+            renter_paid: false, 
+            amt_paid_student: 0, 
+            amt_paid_renter: 0, 
+            concluded_student: false, 
+            concluded_renter: false, 
+            student: student, 
+            renter: renter
+        });
         contract_record[new_id] = instance;
         user_info[student].room_record.push(new_id);
         user_info[renter].room_record.push(new_id);
     
     }
 
-    // customizziamo receive 
+    // customizziamo receive (CAPIRE COME FARE PER IL RENTER) 
     receive() external payable {
         Role role = user_info[msg.sender].role;
         require(role == Role.Student, "Unauthorized payment");
@@ -139,9 +165,9 @@ contract Prova {
         contract_instance memory instance = contract_record[contract_id];
         uint deposit = rooms_record[instance.room_id].deposit;
         uint paid_amount = msg.value;
-        require(paid_amount == conversion_rate * deposit, "Tu vuole inculale meeee");
+        require(paid_amount == conversion_rate * deposit, "Wrong amount paid");
         
-        instance.amt_paid = paid_amount;
+        instance.amt_paid_student = paid_amount;
         instance.student_paid = true;
 
     }
@@ -163,43 +189,35 @@ contract Prova {
 
         delete_contract_instance(receder, other, contract_id, room_id);
         
-        payable(other).transfer(instance.amt_paid);
+        
+        payable(other).transfer(instance.amt_paid_student + instance.amt_paid_renter);
     }
 
-    function delete_contract_instance(address a1, address a2, uint contract_id, uint room_id) private {
-        
-        // delete the contract instance
-        delete(contract_record[contract_id]);
-
-        // mark the room as not occupied
-        rooms_record[room_id].occupied = false;
-        
-        // modify the list of contract instances the addresses are a part of
-        uint[] memory a1_record = user_info[a1].room_record;
-        uint[] memory a1_new_record = new uint[](a1_record.length - 1); // la lunghezza è uno in meno perché tolgo l'id di contratto dall'array
-        uint[] memory a2_record = user_info[a2].room_record;
-        uint[] memory a2_new_record = new uint[](a2_record.length - 1);
-
-        
-        for(uint i = 0; i < a1_record.length; i++) {
-            if (a1_record[i] != contract_id) {
-                a1_new_record[i] = a1_record[i];
-            }  
-        }
-        user_info[a1].room_record = a1_new_record; 
-
-        for(uint i = 0; i < a2_record.length; i++) {
-            if (a2_record[i] != contract_id) {
-                a2_new_record[i] = a2_record[i];
-            }  
-        }
-        user_info[a2].room_record = a2_new_record;
-    }
+    
 
     function end_contract_successfully(uint contract_id) public returns (bool) {
-        //TODO
-    }
+        contract_instance memory instance = contract_record[contract_id];
+        address student;
+        address renter;
+        if (user_info[msg.sender].role == Role.Student) {
+            student = msg.sender;
+            instance.concluded_student = true;
+            renter = instance.renter;
+        }
+        else {
+            renter = msg.sender;
+            instance.concluded_renter = true;
+            student = instance.student;
+        }
 
+        if (instance.concluded_renter && instance.concluded_student) {
+            delete_contract_instance(student, renter, contract_id, instance.room_id);
+            payable(student).transfer(instance.amt_paid_student);
+            payable(renter).transfer(instance.amt_paid_renter);
+            return true;
+        }
+        return false;
+    }
 
 
     function get_user_info(address add) public view returns (user memory) {
@@ -230,6 +248,36 @@ contract Prova {
 
     function check_user_already_registered(address add) private view returns (bool) {
         return user_info[add].already_init;
-    }  
+    } 
+
+    function delete_contract_instance(address a1, address a2, uint contract_id, uint room_id) private {
+        
+        // delete the contract instance
+        delete(contract_record[contract_id]);
+
+        // mark the room as not occupied
+        rooms_record[room_id].occupied = false;
+        
+        // modify the list of contract instances the addresses are a part of
+        uint[] memory a1_record = user_info[a1].room_record;
+        uint[] memory a1_new_record = new uint[](a1_record.length - 1); // la lunghezza è uno in meno perché tolgo l'id di contratto dall'array
+        uint[] memory a2_record = user_info[a2].room_record;
+        uint[] memory a2_new_record = new uint[](a2_record.length - 1);
+
+        
+        for(uint i = 0; i < a1_record.length; i++) {
+            if (a1_record[i] != contract_id) {
+                a1_new_record[i] = a1_record[i];
+            }  
+        }
+        user_info[a1].room_record = a1_new_record; 
+
+        for(uint i = 0; i < a2_record.length; i++) {
+            if (a2_record[i] != contract_id) {
+                a2_new_record[i] = a2_record[i];
+            }  
+        }
+        user_info[a2].room_record = a2_new_record;
+    } 
 }
 

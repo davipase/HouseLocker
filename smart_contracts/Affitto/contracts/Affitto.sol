@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL - 3.0
+
 pragma solidity >= 0.7.0;
 
-//import "hardhat/console.sol"; // CAPIRE COME IMPORTARE
-
 contract Prova {
+
+    event Log(string func, address sender, uint value, bytes data);
 
     struct contract_instance {
         uint contract_id;
@@ -25,7 +26,7 @@ contract Prova {
         uint deposit;
     }
 
-    // the bool variable already_init is used to check if the couple (key, struct) has already been explicitely set (to )
+    // the bool variable already_init is used to check if the couple (key, struct) has already been explicitely set (solidity automatically )
     struct user {
         Role role;
         uint[] room_record;
@@ -157,10 +158,11 @@ contract Prova {
     
     }
 
-    // customizziamo receive (CAPIRE COME FARE PER IL RENTER) 
-    receive() external payable {
+    
+    function student_pay_deposit() public payable {
         Role role = user_info[msg.sender].role;
-        require(role == Role.Student, "Unauthorized payment");
+        require(role == Role.Student);
+        
         uint contract_id = user_info[msg.sender].room_record[0];
         contract_instance memory instance = contract_record[contract_id];
         uint deposit = rooms_record[instance.room_id].deposit;
@@ -169,9 +171,20 @@ contract Prova {
         
         instance.amt_paid_student = paid_amount;
         instance.student_paid = true;
-
+        
     }
 
+    function renter_pay_deposit(uint contract_id) public payable {
+        contract_instance memory instance = contract_record[contract_id];
+        Role role = user_info[msg.sender].role;
+        require(role == Role.Renter, "Data inconsistency"); // probabilmente inutile (già implicitamente incluso nel secondo require)
+        require(msg.sender == instance.renter, "Data inconsistency");
+        uint deposit = rooms_record[instance.room_id].deposit;
+        uint paid_amount = msg.value;
+        require(paid_amount == conversion_rate * deposit, "Wrong amount paid"); 
+        instance.amt_paid_renter = paid_amount;
+        instance.renter_paid = true;
+    }
 
     function withdraw_from_contract(uint contract_id) public {
         // IDEA: lo studente non può ritirarsi prima di aver pagato la caparra, oppure può ritirarsi gratuitamente nel lasso di tempo 
@@ -233,6 +246,19 @@ contract Prova {
         return rooms_record[room_id];
     }
 
+    function check_if_already_paid(address addr, uint contract_id) public view returns (bool) {
+        Role role = user_info[addr].role;
+        contract_instance memory instance = contract_record[contract_id];
+        if (role == Role.Renter) {
+            require(addr == instance.renter, "Data inconsistency");
+            return instance.renter_paid;
+        }
+        else {
+            require(addr == instance.student, "Data inconsistency");
+            return instance.student_paid;
+        }
+    }
+
 
     function check_if_already_in_contract(address student, uint room_id) private view returns (bool) {
         // controlla se lo studente o la stanza (disgiunzione inclusiva) sono già in un contratto
@@ -265,19 +291,42 @@ contract Prova {
         uint[] memory a2_new_record = new uint[](a2_record.length - 1);
 
         
-        for(uint i = 0; i < a1_record.length; i++) {
+        for (uint i = 0; i < a1_record.length; i++) {
             if (a1_record[i] != contract_id) {
                 a1_new_record[i] = a1_record[i];
             }  
         }
         user_info[a1].room_record = a1_new_record; 
 
-        for(uint i = 0; i < a2_record.length; i++) {
+        for (uint i = 0; i < a2_record.length; i++) {
             if (a2_record[i] != contract_id) {
                 a2_new_record[i] = a2_record[i];
             }  
         }
         user_info[a2].room_record = a2_new_record;
     } 
+
+    function string_to_uint(string memory s) private pure returns (uint) {
+        bytes memory b = bytes(s);
+        uint i;
+        uint result = 0;
+        for (i = 0; i < b.length; i++) {
+            uint c = uint(uint8(b[i]));
+            if (c >= 48 && c <= 57) {
+                result = result * 10 + (c - 48);
+            }
+        }
+        return result;
+    }
+
+    fallback() external payable {
+        emit Log("fallback", msg.sender, msg.value, msg.data);
+    }
+
+    receive() external payable {
+        emit Log("fall", msg.sender, msg.value, "");
+    }
+
+    
 }
 

@@ -58,6 +58,7 @@ body{
 }
 .infobox{
   position:fixed;
+  background-color: #ff10f0;
   top:20%;
   right:18%;
   width:25%;

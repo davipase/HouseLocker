@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL - 3.0
 pragma solidity >= 0.7.0;
 
+<<<<<<< Updated upstream
 //import "hardhat/console.sol"; // CAPIRE COME IMPORTARE
+=======
+contract Affitto {
+>>>>>>> Stashed changes
 
 contract Prova {
 
@@ -36,6 +40,7 @@ contract Prova {
     address payable contract_address = payable(address(this));
     mapping(uint => contract_instance) contract_record;         // associa a ogni id la rispettiva struct di contratto
     mapping(address => user) user_info;                        // associa a ogni indirizzo il suo ruolo (student: 0, renter: 1)
+<<<<<<< Updated upstream
     mapping(address => mapping(uint256 => room)) renters_rooms;                  // associa a ogni renter un array che contiene l'id (o NFT, chissà) delle sue stanze
     mapping(string => room) rooms_record;
     uint[] contract_ids;    
@@ -48,6 +53,17 @@ contract Prova {
         num_contracts = 0;
         contract_ids = new uint[](0); // capire che dimensione mettere, se fa un resize automatico, ecc
     }
+=======
+    mapping(address => uint[]) renters_rooms;                  // associa a ogni renter un array che contiene l'id delle sue stanze
+    mapping(uint => room) rooms_record;    
+    uint conversion_rate = 586099570929370;                     // DA CHIEDERE ALL'ESTERNO?
+    uint num_contracts=0;                                         // var globale che incremento a ogni nuovo contratto e la uso come id
+
+    // constructor() {
+    //     //contract_record = new mapping(uint => contract_instance); // non chiaro come si inizializza
+    //     num_contracts = 0;
+    // }
+>>>>>>> Stashed changes
 
     function create_user(bool role_id) public {
         // Doesn't allow double registrations
@@ -188,4 +204,3 @@ contract Prova {
         return user_info[add].already_init;
     }  
 }
-

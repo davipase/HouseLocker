@@ -52,7 +52,7 @@ contract Prova {
         num_contracts = 0;
     }
 
-    function create_user(bool role_id) public {
+    function register_user(bool role_id) public {
         // Doesn't allow double registrations
         require(!user_info[msg.sender].already_init, "User already registered");
         uint256[] memory a = new uint256[](0);
@@ -317,6 +317,10 @@ contract Prova {
             }
         }
         return result;
+    }
+
+    function check_if_user_already_registered(address addr) private view returns (bool) {
+        return user_info[addr].already_init;
     }
 
     fallback() external payable {

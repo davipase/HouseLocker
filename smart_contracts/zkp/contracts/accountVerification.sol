@@ -42,7 +42,7 @@ contract accountVerification{
     }
 
     function zkp_accountVer(uint256 ux, uint256 uy, uint256 c, uint256 z, uint256 hx, uint256 hy, address addr) public pure returns (bool){        
-            return (zkp.Verifier(ux,uy, c, z, hx, hy)) && address(getAddressFromPub_k(bytes32(hx),bytes32(hy)))==addr;
+            return (zkp.Verifier(ux, uy, c, z, hx, hy)) && address(getAddressFromPub_k(bytes32(hx),bytes32(hy)))==addr;
     }
 
 
